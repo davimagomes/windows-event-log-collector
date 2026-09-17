@@ -2,7 +2,7 @@
 #                       LIBRARIES                       
 # =======================================================
 
-
+add_subdirectory ("libs/database")
 
 # =======================================================
 
@@ -14,6 +14,7 @@ add_executable (windows-event-log-collector main.cpp)
 
 target_link_libraries(windows-event-log-collector 
     PRIVATE
+        database_lib
         wevtapi   
 )
 

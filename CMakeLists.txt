@@ -7,4 +7,10 @@ endif()
 
 project ("windows-event-log-collector")
 
+# =======================================================
+#                    SUBDIRECTORIES
+# =======================================================
+
 add_subdirectory ("windows-event-log-collector")
+
+
