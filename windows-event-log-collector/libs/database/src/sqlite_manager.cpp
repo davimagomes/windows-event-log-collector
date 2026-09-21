@@ -1,73 +1,101 @@
+#include <sqlite3.h>
+
 #include "sqlite_manager.hpp"
 
-SqliteManager::SqliteManager(sqlite3& db) : db(&db)
+database::SqliteManager::SqliteManager(sqlite3* sql_conn) : sql_conn(sql_conn)
 {
-	TableStmt();
-	InsertStmt();
+	StringViewArray stmt_str_list = push_str();
+
+	init_table();
+	prep_stmts(stmt_str_list);
 }
 
-SqliteManager::~SqliteManager()
+database::SqliteManager::~SqliteManager()
 {
-	if (p_insert_stmt)
+	for (sqlite3_stmt* stmt : stmt_list)
 	{
-		sqlite3_finalize(p_insert_stmt);
+		if (stmt != nullptr)
+		{
+			sqlite3_finalize(stmt);
+		}
 	}
 }
 
-void SqliteManager::TableStmt()
+void database::SqliteManager::init_table()
 {
-	std::string stmt_str = R"(
-		CREATE TABLE IF NOT EXISTS printer_log (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			time_created TEXT NOT NULL
-			event_id TEXT NOT NULL
-			computer_name TEXT NOT NULL
-			user_name TEXT NOT NULL
-			printer_name TEXT NOT NULL
-		);
-	)";
+	sqlite3_stmt* init_stmt = nullptr;
 
-	sqlite3_stmt* p_table_stmt = nullptr;
+	std::string_view init_stmt_str = "CREATE TABLE IF NOT EXISTS printer_log (id INTEGER PRIMARY KEY AUTOINCREMENT, time_created TEXT NOT NULL, event_id TEXT NOT NULL, computer_name TEXT NOT NULL, user_name TEXT NOT NULL, printer_name TEXT NOT NULL)";
 
-	int stmt_success = sqlite3_prepare_v2(
-		db,
-		stmt_str.c_str(),
-		stmt_str.size(),
-		&p_table_stmt,
+	int table_stmt_success = sqlite3_prepare_v2(
+		sql_conn,
+		init_stmt_str.data(),
+		static_cast<int>(init_stmt_str.size()),
+		&init_stmt,
 		nullptr
 	);
 
-	sqlite3_finalize(p_table_stmt);
+	if (table_stmt_success == SQLITE_OK)
+	{
+		sqlite3_step(init_stmt);
+	}
+	else {
+		std::cout << sqlite3_errmsg(sql_conn);
+	}
 }
 
-void SqliteManager::InsertStmt()
+StringViewArray database::SqliteManager::push_str()
 {
-	std::string stmt_str = R"(
-		INSERT INTO printer_log (
-			time_created, 
-			event_id, 
-			computer_name, 
-			user_name, 
-			printer_name) VALUES (?, ?, ?, ?, ?)
-		)
-	)";
+	StringViewArray stmt_str_list;
 
-	int stmt_success = sqlite3_prepare_v2(
-		db,
-		stmt_str.c_str(),
-		stmt_str.size(),
-		&p_insert_stmt,			
-		nullptr				
-	);
+	stmt_str_list[0] = "INSERT INTO printer_log (time_created, event_id, computer_name, user_name, printer_name) VALUES (?, ?, ?, ?, ?)";
+
+	return stmt_str_list;
 }
 
-void SqliteManager::InsertData(std::string value, int index)
+void database::SqliteManager::prep_stmts(StringViewArray& stmt_str_list)
+{
+	for (std::string_view& stmt_str : stmt_str_list)
+	{
+		sqlite3_stmt* stmt_temp = nullptr;
+
+		int stmt_success = sqlite3_prepare_v2(
+			sql_conn,
+			stmt_str.data(),
+			static_cast<int>(stmt_str.size()),
+			&stmt_temp,
+			nullptr
+		);
+
+		if (stmt_success == SQLITE_OK)
+		{
+			stmt_list.push_back(stmt_temp);
+		}
+		else {
+			std::cout << sqlite3_errmsg(sql_conn) << "\n";
+		}
+	}
+}
+
+void database::SqliteManager::insert_data(std::string value, int index)
 {
 	int bind_success = sqlite3_bind_text(
-		p_insert_stmt,
+		stmt_list[0],
 		index,
 		value.data(),
-		NULL,
+		static_cast<int>(value.size()),
 		nullptr
 	);
+
+	if (bind_success != SQLITE_OK)
+	{
+		std::cout << sqlite3_errmsg(sql_conn);
+	}
+
+	int step_success = sqlite3_step(stmt_list[0]);
+
+	if (step_success != SQLITE_OK)
+	{
+		std::cout << sqlite3_errmsg(sql_conn);
+	}
 }

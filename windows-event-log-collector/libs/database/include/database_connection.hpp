@@ -1,19 +1,21 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
+#include <string>
 
-#include <sqlite3.h>
+// Forward Declaration
+struct sqlite3;
 
-class DatabaseConnection
+namespace database
 {
+	class DatabaseConnection
+	{
+	private:
+		sqlite3* sql_conn = nullptr;
 
-private:
-	sqlite3* sql_conn = nullptr;
+	public:
+		~DatabaseConnection();
+		DatabaseConnection();
 
-	std::string db_name = "sqlite.db";
-
-public:
-	~DatabaseConnection();
-	void GetDatabaseConn();
-};
+		sqlite3* get_sqlite3() const;
+	};
+}

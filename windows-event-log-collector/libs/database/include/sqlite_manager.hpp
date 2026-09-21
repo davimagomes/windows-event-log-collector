@@ -1,25 +1,32 @@
 #pragma once
 
 #include <iostream>
-#include <string>
+#include <string_view>
 #include <vector>
+#include <array>
 
-#include <sqlite3.h>
+// Forward Declaration
+struct sqlite3_stmt;
 
-class SqliteManager
+using StringViewArray = std::array<std::string_view, 2>;
+
+namespace database
 {
+	class SqliteManager
+	{
 
-private:
-	sqlite3* db = nullptr;
+	private:
+		sqlite3* sql_conn;
+		std::vector<sqlite3_stmt*> stmt_list;
 
-	sqlite3_stmt* p_insert_stmt = nullptr;
+		void init_table();
+		StringViewArray push_str();
+		void prep_stmts(StringViewArray& stmt_str_list);
 
-	void TableStmt();
-	void InsertStmt();
+	public:
+		SqliteManager(sqlite3* sql_conn);
+		~SqliteManager();
 
-public:
-	explicit SqliteManager(sqlite3& db);
-	~SqliteManager();
-
-	void InsertData(std::string value, int index);
-};
+		void insert_data(std::string value, int index);
+	};
+}
