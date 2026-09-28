@@ -3,8 +3,8 @@
 # =======================================================
 
 add_library(event_listener
-    libs/collector/event_listener.cpp
-    libs/collector/event_listener.hpp
+    core/event_listener.cpp
+    core/event_listener.hpp
 
     core/log_types.hpp
 )
@@ -26,8 +26,6 @@ add_executable (windows-event-log-collector main.cpp)
 
 target_include_directories(event_listener
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs/collector
-    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/core
 )
 
