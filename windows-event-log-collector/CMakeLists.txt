@@ -11,9 +11,9 @@ add_library(event_listener
 
 add_library(database
     libs/database/database_connection.cpp
-    libs/database/sqlite_manager.cpp
+    core/sqlite_manager.cpp
     libs/database/database_connection.hpp
-    libs/database/sqlite_manager.hpp
+    core//sqlite_manager.hpp
 )
 
 # =======================================================
@@ -31,6 +31,9 @@ target_include_directories(event_listener
 
 target_include_directories(database
     PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite3
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/database
 )
 
