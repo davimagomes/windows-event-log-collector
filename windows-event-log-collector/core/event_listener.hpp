@@ -1,17 +1,21 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <condition_variable>
+#include <functional>
 
-namespace collector
+#include "log_types.hpp"
+
+namespace Core
 {
+	typedef HANDLE EVT_HANDLE;
+	using LogCallback = std::function<void(LogPayload)>;
+
 	class EventListener
 	{
 	private:
+		LogCallback log_callback;
 
 	public:
-		EventListener() ;
+		EventListener(LogCallback callback) : log_callback(callback) {};
 		~EventListener();
 
 		void evt_subscription();

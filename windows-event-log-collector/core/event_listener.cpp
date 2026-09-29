@@ -1,3 +1,6 @@
+#include <iostream>
+#include <utility>
+
 #include <Windows.h>
 #include <winevt.h>
 
@@ -7,7 +10,7 @@
 
 static DWORD WINAPI sub_callback_ctx(EVT_SUBSCRIBE_NOTIFY_ACTION action, PVOID context, EVT_HANDLE h_event) 
 {
-	auto* self = static_cast<collector::EventListener*>(context);
+	auto* self = static_cast<Core::EventListener*>(context);
 
 	if (self) 
 	{
@@ -17,7 +20,7 @@ static DWORD WINAPI sub_callback_ctx(EVT_SUBSCRIBE_NOTIFY_ACTION action, PVOID c
 	return ERROR_SUCCESS;
 }
 
-void collector::EventListener::evt_subscription()
+void Core::EventListener::evt_subscription()
 {
 	LPCWSTR path = L"Microsoft-Windows-PrintService/Operational";
 	LPCWSTR query = L"*[System[(EventID=307)]]";
@@ -34,7 +37,7 @@ void collector::EventListener::evt_subscription()
 	);
 }
 
-void collector::EventListener::get_log(EVT_HANDLE hEvent)
+void Core::EventListener::get_log(EVT_HANDLE hEvent)
 {
 	LogPayload log_payload;
 	DWORD property_count = 0;
@@ -49,6 +52,12 @@ void collector::EventListener::get_log(EVT_HANDLE hEvent)
 		&property_count
 	);
 
+	if (!buffer_size_success)
+	{
+		std::cout << "Buffer size allocation error";
+		return;
+	}
+
 	log_payload.raw_xml.resize(log_payload.buffer_used / sizeof(wchar_t) + 1);
 
 	bool xml_log_success = EvtRender(
@@ -60,6 +69,15 @@ void collector::EventListener::get_log(EVT_HANDLE hEvent)
 		&log_payload.buffer_used,
 		&property_count
 	);
+
+	if (xml_log_success)
+	{
+		log_callback(std::move(log_payload));
+	}
+	else
+	{
+		std::cout << "Xml log failed";
+	}
 
 	return;
 }
